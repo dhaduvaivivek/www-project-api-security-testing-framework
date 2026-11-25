@@ -16,6 +16,7 @@ Releases before 2.0.2 are described on the [GitHub Releases page](https://github
 
 - Without `--allow-destructive`, VAmPI's cross-user password change (`PUT /users/v1/{username}/password`) is reported as INFO "Check Held Back" instead of CRITICAL, because the password change is not sent. Add `--allow-destructive` to reproduce the account takeover against test accounts.
 - A cross-user 2xx whose body does not contain the primary identity's object is MEDIUM instead of CRITICAL, and an object that is also returned without credentials is no longer reported as BOLA (ASTF-API2-2023 reports the missing authentication).
+- **Open redirect detection never saw 3xx responses**. The default HTTP client followed redirects before `testOpenRedirect` could inspect them, so a 302 to an attacker `Location` produced zero findings. Open-redirect probes now use a dedicated non-following client; detection requires a `Location` that sends the browser to the injected external host: an absolute URL, or a scheme-relative one (`//host`, `/\host`, `\\host`) that browsers resolve to another host. Relative paths and same-host redirects are ignored.
 
 ## 2.0.2 (patch)
 
