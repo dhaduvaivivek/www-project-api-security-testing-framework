@@ -136,6 +136,9 @@ class SecurityMisconfigurationTestCaseTest {
                     return new HttpResponse(404, "{}", Map.of());
                 });
 
+        // The target answers the same without credentials as with them.
+        OpenTargetStubs.answerNoAuthLikeCredentialed(httpClient);
+
         List<Finding> findings = testCase.execute(endpoint, httpClient);
 
         assertTrue(findings.stream().anyMatch(f -> f.getTitle().contains("Debug") || f.getTitle().contains("Endpoint")),
@@ -156,6 +159,9 @@ class SecurityMisconfigurationTestCaseTest {
                     }
                     return new HttpResponse(404, "{}", Map.of());
                 });
+
+        // The target answers the same without credentials as with them.
+        OpenTargetStubs.answerNoAuthLikeCredentialed(httpClient);
 
         List<Finding> findings = testCase.execute(endpoint, httpClient);
 
@@ -255,6 +261,9 @@ class SecurityMisconfigurationTestCaseTest {
                     return catchAll;
                 });
 
+        // The target answers the same without credentials as with them.
+        OpenTargetStubs.answerNoAuthLikeCredentialed(httpClient);
+
         List<Finding> findings = testCase.execute(endpoint, httpClient);
 
         assertTrue(findings.stream().anyMatch(f ->
@@ -279,6 +288,9 @@ class SecurityMisconfigurationTestCaseTest {
         EndpointInfo endpoint = new EndpointInfo("/api/users", "GET");
         endpoint.setBaseUrl("https://example.com");
 
+        // The probe asks without credentials first, then with them; answer both the same way.
+        when(httpClient.getWithStatusNoAuth(anyString()))
+                .thenAnswer(inv -> httpClient.getWithStatus(inv.getArgument(0), Map.of()));
         when(httpClient.getWithStatus(anyString(), anyMap()))
                 .thenAnswer(inv -> {
                     String url = inv.getArgument(0);
@@ -306,6 +318,9 @@ class SecurityMisconfigurationTestCaseTest {
         EndpointInfo second = new EndpointInfo("/api/orders", "GET");
         second.setBaseUrl("https://example.com");
 
+        // The probe asks without credentials first, then with them; answer both the same way.
+        when(httpClient.getWithStatusNoAuth(anyString()))
+                .thenAnswer(inv -> httpClient.getWithStatus(inv.getArgument(0), Map.of()));
         when(httpClient.getWithStatus(anyString(), anyMap()))
                 .thenAnswer(inv -> {
                     String url = inv.getArgument(0);
@@ -324,6 +339,7 @@ class SecurityMisconfigurationTestCaseTest {
         assertTrue(secondFindings.stream().noneMatch(f -> f.getTitle().contains("Debug")),
                 "Second endpoint of the same base URL must not repeat debug findings");
         verify(httpClient, never()).getWithStatus(contains("/actuator"), anyMap());
+        verify(httpClient, never()).getWithStatusNoAuth(contains("/actuator"));
     }
 
     @Test
@@ -332,6 +348,9 @@ class SecurityMisconfigurationTestCaseTest {
         EndpointInfo root = new EndpointInfo("/", "GET");
         root.setBaseUrl("https://example.com");
 
+        // The probe asks without credentials first, then with them; answer both the same way.
+        when(httpClient.getWithStatusNoAuth(anyString()))
+                .thenAnswer(inv -> httpClient.getWithStatus(inv.getArgument(0), Map.of()));
         when(httpClient.getWithStatus(anyString(), anyMap()))
                 .thenAnswer(inv -> {
                     String url = inv.getArgument(0);

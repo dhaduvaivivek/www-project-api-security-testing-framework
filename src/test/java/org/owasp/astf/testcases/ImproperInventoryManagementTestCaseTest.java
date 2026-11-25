@@ -146,6 +146,9 @@ class ImproperInventoryManagementTestCaseTest {
         when(httpClient.getWithStatus(argThat(url -> url != null && !url.contains("__astf_nonexistent_path_check__")), anyMap()))
                 .thenReturn(ok("{\"openapi\":\"3.0.0\",\"paths\":{}}"));
 
+        // The target answers the same without credentials as with them.
+        OpenTargetStubs.answerNoAuthLikeCredentialed(httpClient);
+
         List<Finding> findings = testCase.execute(endpoint, httpClient);
 
         assertFalse(findings.isEmpty(), "Should detect exposed API documentation");
@@ -210,6 +213,9 @@ class ImproperInventoryManagementTestCaseTest {
         EndpointInfo endpoint = new EndpointInfo("/api/users", "GET");
         endpoint.setBaseUrl("https://example.com");
 
+        // The probe asks without credentials first, then with them; answer both the same way.
+        when(httpClient.getWithStatusNoAuth(anyString()))
+                .thenAnswer(inv -> httpClient.getWithStatus(inv.getArgument(0), Map.of()));
         when(httpClient.getWithStatus(argThat(url -> url != null && url.contains("__astf_nonexistent_path_check__")), anyMap()))
                 .thenReturn(notFound());
         when(httpClient.getWithStatus(argThat(url -> url != null && !url.contains("__astf_nonexistent_path_check__")), anyMap()))
@@ -237,6 +243,9 @@ class ImproperInventoryManagementTestCaseTest {
         EndpointInfo second = new EndpointInfo("/api/orders", "GET");
         second.setBaseUrl("https://example.com");
 
+        // The probe asks without credentials first, then with them; answer both the same way.
+        when(httpClient.getWithStatusNoAuth(anyString()))
+                .thenAnswer(inv -> httpClient.getWithStatus(inv.getArgument(0), Map.of()));
         when(httpClient.getWithStatus(argThat(url -> url != null && url.contains("__astf_nonexistent_path_check__")), anyMap()))
                 .thenReturn(notFound());
         when(httpClient.getWithStatus(argThat(url -> url != null && !url.contains("__astf_nonexistent_path_check__")), anyMap()))
@@ -253,6 +262,7 @@ class ImproperInventoryManagementTestCaseTest {
                         || f.getTitle().contains("Exposed")),
                 "Second endpoint of the same base URL must not repeat documentation findings");
         verify(httpClient, never()).getWithStatus(contains("/openapi.json"), anyMap());
+        verify(httpClient, never()).getWithStatusNoAuth(contains("/openapi.json"));
     }
 
     @Test
@@ -261,6 +271,9 @@ class ImproperInventoryManagementTestCaseTest {
         EndpointInfo root = new EndpointInfo("/", "GET");
         root.setBaseUrl("https://example.com");
 
+        // The probe asks without credentials first, then with them; answer both the same way.
+        when(httpClient.getWithStatusNoAuth(anyString()))
+                .thenAnswer(inv -> httpClient.getWithStatus(inv.getArgument(0), Map.of()));
         when(httpClient.getWithStatus(argThat(url -> url != null && url.contains("__astf_nonexistent_path_check__")), anyMap()))
                 .thenReturn(notFound());
         when(httpClient.getWithStatus(argThat(url -> url != null && !url.contains("__astf_nonexistent_path_check__")), anyMap()))
